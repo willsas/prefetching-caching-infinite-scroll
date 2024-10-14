@@ -7,16 +7,15 @@ import UIKit
 
 final class ImprovedVideoCollectionViewCell: UICollectionViewCell {
 
-    private var playerView = VideoPlayerView() {
+    private var playerView: VideoPlayerView? {
         didSet {
-            oldValue.removeFromSuperview()
+            oldValue?.removeFromSuperview()
             configurePlayerView()
         }
     }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        configurePlayerView()
     }
 
     @available(*, unavailable)
@@ -26,26 +25,22 @@ final class ImprovedVideoCollectionViewCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        playerView.reset()
     }
 
-//    func configure(with url: URL) {
-//        playerView.configure(with: url)
-//    }
-    
     func configure(with player: VideoPlayerView) {
         playerView = player
     }
 
     func play() {
-        playerView.play()
+        playerView?.play()
     }
 
     func pause() {
-        playerView.pause()
+        playerView?.pause()
     }
 
     private func configurePlayerView() {
+        guard let playerView else { return }
         playerView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(playerView)
         NSLayoutConstraint.activate([

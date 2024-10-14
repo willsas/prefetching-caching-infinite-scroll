@@ -17,6 +17,7 @@ final class PlayerObserver {
     let isBuffering = CurrentValueSubject<Bool, Never>(false)
     let isPlaying = CurrentValueSubject<Bool, Never>(false)
     let isLoading = CurrentValueSubject<Bool, Never>(false)
+    let didEnd = PassthroughSubject<Void, Never>()
 
     init(player: AVPlayer) {
         self.player = player
@@ -32,7 +33,10 @@ final class PlayerObserver {
         }
 
         loadedTimeRangesObserver = player.currentItem?
-            .observe(\.loadedTimeRanges, options: [.new]) { [weak self] _, _ in
+            .observe(
+                \.loadedTimeRanges,
+                options: [.new]
+            ) { [weak self] _, _ in
                 self?.updateLoadedBuffer()
             }
 
@@ -54,6 +58,7 @@ final class PlayerObserver {
         ) { [weak self] _, _ in
             self?.isBuffering.send(false)
         }
+
         timeControlStatusObserver = player.observe(
             \.timeControlStatus,
             options: [.new, .old],
@@ -64,6 +69,20 @@ final class PlayerObserver {
                 default: break
                 }
             }
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(videoDidEnd),
+            name: AVPlayerItem.didPlayToEndTimeNotification,
+            object: player.currentItem
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(videoStalled),
+            name: AVPlayerItem.playbackStalledNotification,
+            object: player.currentItem
         )
     }
 
@@ -76,6 +95,7 @@ final class PlayerObserver {
         playbackLikelyToKeepUpObserver?.invalidate()
         playbackBufferFullObserver?.invalidate()
         timeControlStatusObserver?.invalidate()
+        NotificationCenter.default.removeObserver(self)
     }
 
     private func updateCurrentPosition() {
@@ -94,5 +114,15 @@ final class PlayerObserver {
 
         let bufferProgress = totalDuration > 0 ? bufferedDuration / totalDuration : 0.0
         loadedBuffer.send(bufferProgress)
+    }
+
+    @objc
+    private func videoDidEnd(notification: Notification) {
+        didEnd.send(())
+    }
+
+    @objc
+    private func videoStalled(notification: Notification) {
+        isBuffering.send(true)
     }
 }

@@ -10,8 +10,9 @@ final class VideoList: Hashable {
     let url: URL
     var videoPlayer: VideoPlayerView?
     
-    init(url: URL) {
+    init(url: URL, videoPlayerView: VideoPlayerView? = nil) {
         self.url = url
+        self.videoPlayer = videoPlayerView
     }
     
     static func == (lhs: VideoList, rhs: VideoList) -> Bool {
@@ -26,8 +27,10 @@ final class VideoList: Hashable {
 
 @MainActor
 final class ImprovedScrollViewModel: ObservableObject {
+    
     @Published var videos: [VideoList] = []
     @Published var isLoading = false
+    
     private var isLoadingLoadMore = false
     private let getVideos: () async throws -> [Video]
     private let getNextVideos: (URL) async throws -> [Video]
@@ -43,46 +46,61 @@ final class ImprovedScrollViewModel: ObservableObject {
     func load() async {
         isLoading = true
         do {
-            var videos = try await getVideos().map { VideoList(url: $0.url) }
-            let first = videos.first!
-            first.videoPlayer = VideoPlayerView()
-            first.videoPlayer?.configure(with: first.url)
-            videos[0] = first
-            self.videos = videos
-            currentIndex(0)
+            videos = try await loadVideos()
+            prefetch(at: 0)
         } catch {}
         isLoading = false
     }
     
     func loadMore() async {
         guard !isLoadingLoadMore, let lastURL = videos.last?.url else { return }
+        let lastIndexBefore = videos.count - 1
         isLoadingLoadMore = true
         do {
-            let nextVideos = try await getNextVideos(lastURL)
-                .map {
-                    let list = VideoList(url: $0.url)
-                    list.videoPlayer = VideoPlayerView()
-                    list.videoPlayer?.configure(with: $0.url)
-                    return list
-                }
-            videos.append(contentsOf: nextVideos)
+            videos.append(contentsOf: try await loadNextVideos(lastURL: lastURL))
+            prefetch(at: lastIndexBefore)
         } catch {}
         
         isLoadingLoadMore = false
     }
     
-    func currentIndex(_ index: Int) {
-        let chunks = 3
-        let startIndex = index + 1
-        let endIndex = min(startIndex + chunks, videos.count)
-//        let afterVideos = Array(videos[startIndex..<endIndex])
-        videos[startIndex..<endIndex].forEach { videoList in
-            if videoList.videoPlayer == nil {
-                let videoPlayer = VideoPlayerView()
-                videoList.videoPlayer = videoPlayer
-                videoPlayer.configure(with: videoList.url)
+    func prefetch(at currentIndex: Int, toNext next: Int = 3) {
+        let adjustedUpperBound = min(currentIndex + next, videos.count)
+        (currentIndex..<adjustedUpperBound).forEach { index in
+            if videos[index].videoPlayer == nil {
+                videos[index].videoPlayer = .init(url: videos[index].url)
             }
         }
+        printCurrentVideos()
+    }
+    
+    private func loadVideos() async throws -> [VideoList] {
+        let videoLists = try await getVideos().map { VideoList(url: $0.url) }
+        if let firstVideo = videoLists.first {
+            firstVideo.videoPlayer = .init(url: firstVideo.url)
+        }
+        return videoLists
+    }
+    
+    private func loadNextVideos(lastURL: URL) async throws -> [VideoList] {
+        let videoLists = try await getNextVideos(lastURL).map { VideoList(url: $0.url) }
+        if let firstVideo = videoLists.first {
+            firstVideo.videoPlayer = .init(url: firstVideo.url)
+        }
+        return videoLists
+    }
+    
+    private func printCurrentVideos() {
+        videos.enumerated().forEach { (index, item) in
+            print("@@@ videoplayer: \(item.videoPlayer == nil ? "NIL" : "Exist"),  index: \(index)")
+        }
+    }
+}
+
+private extension VideoPlayerView {
+    convenience init(url: URL) {
+        self.init()
+        configure(with: url, preferredForwardBufferDuration: 5)
     }
 }
 

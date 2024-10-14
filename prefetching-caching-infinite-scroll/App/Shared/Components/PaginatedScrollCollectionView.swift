@@ -10,8 +10,7 @@ final class PaginatedScrollCollectionView: UICollectionView {
     
     @Published var visible: [UICollectionViewCell] = []
     @Published var nonVisible: [UICollectionViewCell] = []
-    
-    var visibleIndexPaths: [IndexPath] = []
+    @Published var visibleIndexPaths: [IndexPath] = []
     
     convenience init() {
         let section = NSCollectionLayoutSection(

@@ -20,7 +20,6 @@ final class VideoCollectionViewCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        playerView.reset()
     }
 
     func configure(with url: URL) {

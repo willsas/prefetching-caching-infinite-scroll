@@ -2,8 +2,8 @@
 //  ImprovedScrollViewController.swift
 //  prefetching-caching-infinite-scroll
 
-import UIKit
 import Combine
+import UIKit
 
 final class ImprovedScrollViewController: UIViewController {
     private typealias DataSource = UICollectionViewDiffableDataSource<Section, VideoList>
@@ -40,16 +40,20 @@ final class ImprovedScrollViewController: UIViewController {
     }
 
     private func setupBinding() {
-        viewModel.$videos.sink { [weak self] in self?.populate($0) }.store(in: &cancellables)
-        viewModel.$isLoading.sink { [weak self] isLoading in
-            if isLoading {
-                self?.loadingView.startLoading()
-            } else {
-                self?.loadingView.stopLoading()
-            }
-        }.store(in: &cancellables)
+        viewModel.$videos
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in self?.populate($0) }.store(in: &cancellables)
+        viewModel.$isLoading
+            .receive(on: RunLoop.main)
+            .sink { [weak self] isLoading in
+                if isLoading {
+                    self?.loadingView.startLoading()
+                } else {
+                    self?.loadingView.stopLoading()
+                }
+            }.store(in: &cancellables)
     }
-    
+
     private func setupLoadingView() {
         loadingView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(loadingView)
@@ -71,24 +75,35 @@ final class ImprovedScrollViewController: UIViewController {
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
 
-        collectionView.$visible.sink { cells in
-            cells
-                .compactMap { $0 as? ImprovedVideoCollectionViewCell }
-                .forEach { $0.play() }
-        }.store(in: &cancellables)
+        collectionView.$visible
+            .receive(on: RunLoop.main)
+            .sink { cells in
+                cells
+                    .compactMap { $0 as? ImprovedVideoCollectionViewCell }
+                    .forEach { $0.play() }
+            }.store(in: &cancellables)
 
-        collectionView.$nonVisible.sink { cells in
-            cells
-                .compactMap { $0 as? ImprovedVideoCollectionViewCell }
-                .forEach { $0.pause() }
-        }.store(in: &cancellables)
+        collectionView.$nonVisible
+            .receive(on: RunLoop.main)
+            .sink { cells in
+                cells
+                    .compactMap { $0 as? ImprovedVideoCollectionViewCell }
+                    .forEach { $0.pause() }
+            }.store(in: &cancellables)
+
+        collectionView.$visibleIndexPaths
+            .receive(on: RunLoop.main)
+            .sink { [weak self] indexPaths in
+                guard let firstRow = indexPaths.first?.row else { return }
+                self?.viewModel.prefetch(at: firstRow)
+            }.store(in: &cancellables)
     }
 
     private func populate(_ videos: [VideoList]) {
         var snapshot = NSDiffableDataSourceSnapshot<Section, VideoList>()
         snapshot.appendSections([.main])
         snapshot.appendItems(videos, toSection: .main)
-        dataSource.apply(snapshot)
+        dataSource.apply(snapshot, animatingDifferences: false)
     }
 
     private func makeDataSource() -> DataSource {
@@ -123,12 +138,7 @@ final class ImprovedScrollViewController: UIViewController {
 
 extension ImprovedScrollViewController: UICollectionViewDelegate {
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        guard let paginatedScrollView = scrollView as? PaginatedScrollCollectionView else { return }
-        
-        paginatedScrollView.updateVisibleCells()
-        if let firstVisible = paginatedScrollView.visibleIndexPaths.map(\.row).first {
-            viewModel.currentIndex(firstVisible)
-        }
+        (scrollView as? PaginatedScrollCollectionView)?.updateVisibleCells()
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {

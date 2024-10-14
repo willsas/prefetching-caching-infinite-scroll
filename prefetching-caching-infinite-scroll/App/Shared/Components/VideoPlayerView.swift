@@ -13,6 +13,7 @@ final class VideoPlayerView: UIView {
         didSet {
             playerObserver = PlayerObserver(player: player)
             observePlayer()
+            setupNetworkMetric()
         }
     }
 
@@ -25,6 +26,11 @@ final class VideoPlayerView: UIView {
             .withTintColor(.white, renderingMode: .alwaysOriginal)
     )
     private let loadingView = LoadingView()
+    private var networkMetric: NetworkMetricInfoView? {
+        didSet {
+            oldValue?.removeFromSuperview()
+        }
+    }
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -41,23 +47,33 @@ final class VideoPlayerView: UIView {
         playerLayer.frame = bounds
     }
 
-    func configure(with url: URL) {
-        player = AVPlayer(url: url)
+    func configure(
+        with url: URL,
+        preferredForwardBufferDuration: Double = 0
+    ) {
+        let player = AVPlayer(url: url)
+        player.currentItem!.preferredForwardBufferDuration = preferredForwardBufferDuration
+        self.player = player
         playerLayer.player = player
     }
 
     func play() {
         reset()
-        player.automaticallyWaitsToMinimizeStalling = false
-        player.playImmediately(atRate: 1)
+        player.play()
         slider.viewModel.bufferValue = playerObserver.loadedBuffer.value
+    }
+    
+    func replay() {
+        player.seekToNormalizedTime(0) { [weak self] _ in
+            self?.play()
+        }
     }
 
     func pause() {
         player.pause()
     }
     
-    func reset() {
+    private func reset() {
         pauseButonImage.isHidden = true
         loadingView.stopLoading()
         slider.viewModel.value = .zero
@@ -72,6 +88,7 @@ final class VideoPlayerView: UIView {
         playerObserver.currentPosition.sink { [weak self] current in
             guard self?.slider.viewModel.interacting == false else { return }
             self?.slider.viewModel.value = current
+            if current == 1 { self?.replay() }
         }.store(in: &cancellables)
 
         playerObserver.isBuffering.sink { [weak self] isBuffering in
@@ -84,6 +101,10 @@ final class VideoPlayerView: UIView {
         
         playerObserver.isPlaying.sink { [weak self] isPlaying in
             if isPlaying { self?.pauseButonImage.isHidden = true }
+        }.store(in: &cancellables)
+        
+        playerObserver.didEnd.sink { [weak self] in
+            self?.replay()
         }.store(in: &cancellables)
     }
 
@@ -136,6 +157,18 @@ final class VideoPlayerView: UIView {
         slider.valueChangedOnEnd = { [weak self] in
             self?.player.seekToNormalizedTime(Float($0))
         }
+    }
+    
+    private func setupNetworkMetric() {
+        networkMetric = NetworkMetricInfoView(player: player)
+        guard let networkMetric else { return }
+        
+        networkMetric.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(networkMetric)
+        NSLayoutConstraint.activate([
+            networkMetric.trailingAnchor.constraint(equalTo: trailingAnchor),
+            networkMetric.centerYAnchor.constraint(equalTo: centerYAnchor)
+        ])
     }
 
     private func setupLongPressGesture() {
