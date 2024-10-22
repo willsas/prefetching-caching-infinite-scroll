@@ -71,17 +71,23 @@ final class CurrentScrollViewController: UIViewController {
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
 
-        collectionView.$visible.sink { cells in
+        collectionView.$onVisibleCells.sink { cells in
             cells
                 .compactMap { $0 as? VideoCollectionViewCell }
                 .forEach { $0.play() }
         }.store(in: &cancellables)
 
-        collectionView.$nonVisible.sink { cells in
+        collectionView.$onNonVisibleCells.sink { cells in
             cells
                 .compactMap { $0 as? VideoCollectionViewCell }
                 .forEach { $0.pause() }
         }.store(in: &cancellables)
+        
+        collectionView.onLoadMore
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
+                Task { await self?.viewModel.loadMore() }
+            }.store(in: &cancellables)
     }
 
     private func populate(_ videos: [Video]) {
@@ -121,15 +127,5 @@ final class CurrentScrollViewController: UIViewController {
 extension CurrentScrollViewController: UICollectionViewDelegate {
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         (scrollView as? PaginatedScrollCollectionView)?.updateVisibleCells()
-    }
-
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let offsetY = scrollView.contentOffset.y
-        let contentHeight = scrollView.contentSize.height
-        let threshold: CGFloat = 100
-
-        if offsetY > contentHeight - scrollView.frame.size.height - threshold {
-            Task { await viewModel.loadMore() }
-        }
     }
 }

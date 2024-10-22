@@ -2,13 +2,25 @@ import AVKit
 import Combine
 import UIKit
 
+final class Caption1label: UILabel {
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        font = .preferredFont(forTextStyle: .caption1)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
+
 final class NetworkMetricInfoView: UIView {
 
-    private let bufferSizeLabel = UILabel()
-    private let bitrateLabel = UILabel()
-    private let playingStatusLabel = UILabel()
-    private let resolutionLabel = UILabel()
-    private let downloadSpeedLabel = UILabel()
+    private let bufferSizeLabel = Caption1label()
+    private let bitrateLabel = Caption1label()
+    private let playingStatusLabel = Caption1label()
+    private let resolutionLabel = Caption1label()
+    private let downloadSpeedLabel = Caption1label()
 
     private var cancellables = Set<AnyCancellable>()
     
@@ -30,10 +42,10 @@ final class NetworkMetricInfoView: UIView {
 
         let stackView = UIStackView(arrangedSubviews: [
             bufferSizeLabel,
-            bitrateLabel,
-            playingStatusLabel,
-            resolutionLabel,
-            downloadSpeedLabel
+//            bitrateLabel,
+//            playingStatusLabel,
+//            resolutionLabel,
+//            downloadSpeedLabel
         ])
 
         stackView.axis = .vertical

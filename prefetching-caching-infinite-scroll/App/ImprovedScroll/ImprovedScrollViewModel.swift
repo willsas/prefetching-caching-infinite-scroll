@@ -68,16 +68,24 @@ final class ImprovedScrollViewModel: ObservableObject {
         let adjustedUpperBound = min(currentIndex + next, videos.count)
         (currentIndex..<adjustedUpperBound).forEach { index in
             if videos[index].videoPlayer == nil {
-                videos[index].videoPlayer = .init(url: videos[index].url)
+                videos[index].videoPlayer = .make(url: videos[index].url)
             }
         }
+        discardPrefetchedData(currentIndex: currentIndex)
         printCurrentVideos()
+    }
+    
+    private func discardPrefetchedData(currentIndex: Int) {
+        let adjustedLowerBound = max(0, currentIndex - 1)
+        (0..<adjustedLowerBound).forEach { index in
+            videos[index].videoPlayer = nil
+        }
     }
     
     private func loadVideos() async throws -> [VideoList] {
         let videoLists = try await getVideos().map { VideoList(url: $0.url) }
         if let firstVideo = videoLists.first {
-            firstVideo.videoPlayer = .init(url: firstVideo.url)
+            firstVideo.videoPlayer = .make(url: firstVideo.url)
         }
         return videoLists
     }
@@ -85,7 +93,7 @@ final class ImprovedScrollViewModel: ObservableObject {
     private func loadNextVideos(lastURL: URL) async throws -> [VideoList] {
         let videoLists = try await getNextVideos(lastURL).map { VideoList(url: $0.url) }
         if let firstVideo = videoLists.first {
-            firstVideo.videoPlayer = .init(url: firstVideo.url)
+            firstVideo.videoPlayer = .make(url: firstVideo.url)
         }
         return videoLists
     }
@@ -97,10 +105,15 @@ final class ImprovedScrollViewModel: ObservableObject {
     }
 }
 
-private extension VideoPlayerView {
-    convenience init(url: URL) {
-        self.init()
-        configure(with: url, preferredForwardBufferDuration: 5)
+extension VideoPlayerView {
+    static func make(url: URL) -> VideoPlayerView {
+        let videoPlayer = VideoPlayerView()
+        videoPlayer.configure(
+            with: url,
+            preferredForwardBufferDuration: 5,
+            maxResolution: .screenSize
+        )
+        return videoPlayer
     }
 }
 

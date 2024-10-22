@@ -8,7 +8,27 @@ import AVFoundation
 import Combine
 
 final class VideoPlayerView: UIView {
-   
+    
+    enum MaxResolutionSelection {
+        case screenSize
+        case fullHD
+        case hd
+        case sd
+        case `default`
+        
+        var size: CGSize {
+            switch self {
+            case .fullHD: return .init(width: 1920, height: 1080)
+            case .screenSize:
+                let screenSize = UIScreen.main.bounds.size
+                return CGSize(width: screenSize.width, height: screenSize.height)
+            case .hd: return .init(width: 1280, height: 720)
+            case .sd: return .init(width: 640, height: 360)
+            case .default: return .zero
+            }
+        }
+    }
+    
     private var player: AVPlayer! {
         didSet {
             playerObserver = PlayerObserver(player: player)
@@ -49,10 +69,12 @@ final class VideoPlayerView: UIView {
 
     func configure(
         with url: URL,
-        preferredForwardBufferDuration: Double = 0
+        preferredForwardBufferDuration: Double = 0,
+        maxResolution: MaxResolutionSelection = .default
     ) {
         let player = AVPlayer(url: url)
         player.currentItem!.preferredForwardBufferDuration = preferredForwardBufferDuration
+        player.currentItem!.preferredMaximumResolution = maxResolution.size
         self.player = player
         playerLayer.player = player
     }

@@ -8,7 +8,7 @@ open class ThumblessSlider: UIView, Slidable {
     }
 
     public struct ScaleRatio {
-        @available(*, deprecated, renamed: "onAxis", message: "")  public var ratioOnAxis: CGFloat {
+        @available(*, deprecated, renamed: "onAxis", message: "") public var ratioOnAxis: CGFloat {
             onAxis
         }
 
@@ -17,7 +17,7 @@ open class ThumblessSlider: UIView, Slidable {
             deprecated,
             renamed: "againstAxis",
             message: ""
-        )  public var ratioAgainstAxis: CGFloat {
+        ) public var ratioAgainstAxis: CGFloat {
             againstAxis
         }
 
@@ -45,8 +45,8 @@ open class ThumblessSlider: UIView, Slidable {
             visualEffectView.effect = visualEffect
         }
     }
-    
-    public var customTintColor: UIColor? 
+
+    public var customTintColor: UIColor?
 
     open class var defaultScaleRatio: ScaleRatio {
         ScaleRatio(onAxis: 1, againstAxis: 1)
@@ -82,7 +82,6 @@ open class ThumblessSlider: UIView, Slidable {
             }
             set {
                 let scaled = newValue
-                // deactivate before activating to avoid ambiguity complains
                 if scaled {
                     width.isActive = false
                     height.isActive = false
@@ -237,8 +236,6 @@ open class ThumblessSlider: UIView, Slidable {
     }
 }
 
-// MARK: filling
-
 private extension ThumblessSlider {
     func getFillingViewLength(
         byRatio ratio: CGFloat,
@@ -246,7 +243,7 @@ private extension ThumblessSlider {
     ) -> CGFloat {
         let size = bounds.size
         if interacting {
-            return ratio * scaleRatio.ratioOnAxis * projection(of: size, on: direction.axis)
+            return ratio * scaleRatio.onAxis * projection(of: size, on: direction.axis)
         } else {
             return ratio * projection(of: size, on: direction.axis)
         }
@@ -262,8 +259,6 @@ private extension ThumblessSlider {
         }
     }
 }
-
-// MARK: build
 
 private extension ThumblessSlider {
     func buildView() {
@@ -289,9 +284,9 @@ private extension ThumblessSlider {
             multiplier: {
                 switch direction.axis {
                 case .xAxis:
-                    return scaleRatio.ratioOnAxis
+                    return scaleRatio.onAxis
                 case .yAxis:
-                    return scaleRatio.ratioAgainstAxis
+                    return scaleRatio.againstAxis
                 }
             }()
         )
@@ -300,9 +295,9 @@ private extension ThumblessSlider {
             multiplier: {
                 switch direction.axis {
                 case .xAxis:
-                    return scaleRatio.ratioAgainstAxis
+                    return scaleRatio.againstAxis
                 case .yAxis:
-                    return scaleRatio.ratioOnAxis
+                    return scaleRatio.onAxis
                 }
             }()
         )

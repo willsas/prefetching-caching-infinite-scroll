@@ -124,7 +124,7 @@ open class Slider: UIView {
         viewModel.interacting = false
         valueWhenTouchBegan = nil
         touchPointWhenBagan = nil
-        
+
         valueChangedOnEnd?(viewModel.value)
     }
 
@@ -199,7 +199,7 @@ private extension Slider {
 private extension Slider {
     func fit(_ viewModel: ViewModel) {
         slider.fit(viewModel)
-        
+
         var bufferViewModel = viewModel
         bufferViewModel.value = viewModel.bufferValue
         bufferSlider.fit(bufferViewModel)
@@ -216,7 +216,7 @@ private extension Slider {
 
         slider.tintColor = tintColor
         bufferSlider.tintColor = tintColor
-        
+
         slider.translatesAutoresizingMaskIntoConstraints = false
         bufferSlider.translatesAutoresizingMaskIntoConstraints = false
 
@@ -228,7 +228,7 @@ private extension Slider {
             .isActive = true
         slider.bottomAnchor.constraint(equalTo: bottomAnchor)
             .isActive = true
-        
+
         bufferSlider.leadingAnchor.constraint(equalTo: leadingAnchor)
             .isActive = true
         bufferSlider.trailingAnchor.constraint(equalTo: trailingAnchor)

@@ -66,6 +66,7 @@ final class ImprovedScrollViewController: UIViewController {
 
     private func setupCollectionView() {
         collectionView.delegate = self
+        collectionView.decelerationRate = .fast
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(collectionView)
         NSLayoutConstraint.activate([
@@ -75,7 +76,7 @@ final class ImprovedScrollViewController: UIViewController {
             collectionView.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
 
-        collectionView.$visible
+        collectionView.$onVisibleCells
             .receive(on: RunLoop.main)
             .sink { cells in
                 cells
@@ -83,7 +84,7 @@ final class ImprovedScrollViewController: UIViewController {
                     .forEach { $0.play() }
             }.store(in: &cancellables)
 
-        collectionView.$nonVisible
+        collectionView.$onNonVisibleCells
             .receive(on: RunLoop.main)
             .sink { cells in
                 cells
@@ -91,11 +92,17 @@ final class ImprovedScrollViewController: UIViewController {
                     .forEach { $0.pause() }
             }.store(in: &cancellables)
 
-        collectionView.$visibleIndexPaths
+        collectionView.$onVisibleIndexPaths
             .receive(on: RunLoop.main)
             .sink { [weak self] indexPaths in
                 guard let firstRow = indexPaths.first?.row else { return }
                 self?.viewModel.prefetch(at: firstRow)
+            }.store(in: &cancellables)
+
+        collectionView.onLoadMore
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
+                Task { await self?.viewModel.loadMore() }
             }.store(in: &cancellables)
     }
 
@@ -112,9 +119,12 @@ final class ImprovedScrollViewController: UIViewController {
             VideoList
         > { [weak self] cell, indexPath, data in
             if let player = data.videoPlayer {
+                print("@@@ play from prefetched data")
                 cell.configure(with: player)
             } else {
-                fatalError()
+                print("@@@ play from current")
+                data.videoPlayer = .make(url: data.url)
+                cell.configure(with: data.videoPlayer!)
             }
             if indexPath.row == 0 && self?.firstDequeue == true {
                 cell.play()
@@ -137,8 +147,13 @@ final class ImprovedScrollViewController: UIViewController {
 }
 
 extension ImprovedScrollViewController: UICollectionViewDelegate {
+    func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
+        scrollView.isScrollEnabled = false
+    }
+
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         (scrollView as? PaginatedScrollCollectionView)?.updateVisibleCells()
+        scrollView.isScrollEnabled = true
     }
 
     func scrollViewDidScroll(_ scrollView: UIScrollView) {

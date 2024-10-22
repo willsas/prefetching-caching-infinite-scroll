@@ -3,16 +3,64 @@
 //  prefetching-caching-infinite-scroll
 //
 
-import UIKit
 import Combine
+import UIKit
 
 final class PaginatedScrollCollectionView: UICollectionView {
-    
-    @Published var visible: [UICollectionViewCell] = []
-    @Published var nonVisible: [UICollectionViewCell] = []
-    @Published var visibleIndexPaths: [IndexPath] = []
-    
+
+    @Published var onVisibleCells: [UICollectionViewCell] = []
+    @Published var onNonVisibleCells: [UICollectionViewCell] = []
+    @Published var onVisibleIndexPaths: [IndexPath] = []
+    var onLoadMore = PassthroughSubject<Void, Never>()
+
+    private var cancellables = Set<AnyCancellable>()
+
     convenience init() {
+        self.init(
+            frame: .zero,
+            collectionViewLayout: UICollectionViewCompositionalLayout.fullScreenSize()
+        )
+
+        contentInsetAdjustmentBehavior = .never
+        isPagingEnabled = true
+        showsVerticalScrollIndicator = false
+        showsHorizontalScrollIndicator = false
+        setupLoadMore()
+    }
+
+    func updateVisibleCells() {
+        layoutIfNeeded()
+        let visibleIndexPaths = indexPathsForVisibleItems
+        let visibleCells = visibleCells
+
+        let allItems = (0..<numberOfItems(inSection: 0)).map { IndexPath(item: $0, section: 0) }
+        let nonVisibleIndexPaths = allItems.filter { !visibleIndexPaths.contains($0) }
+        let nonVisibleCells = nonVisibleIndexPaths.compactMap { cellForItem(at: $0) }
+
+        onVisibleCells = visibleCells
+        onNonVisibleCells = nonVisibleCells
+        self.onVisibleIndexPaths = visibleIndexPaths
+    }
+
+    private func setupLoadMore() {
+        publisher(for: \.contentOffset)
+            .throttle(for: 10.0, scheduler: RunLoop.main, latest: true)
+            .sink { [weak self] contentOffset in
+                guard let self else { return }
+
+                let offsetY = contentOffset.y
+                let contentHeight = contentSize.height
+                let threshold: CGFloat = 100
+
+                if offsetY > contentHeight - frame.size.height - threshold {
+                    onLoadMore.send(())
+                }
+            }.store(in: &cancellables)
+    }
+}
+
+private extension UICollectionViewCompositionalLayout {
+    static func fullScreenSize() -> UICollectionViewCompositionalLayout {
         let section = NSCollectionLayoutSection(
             group: NSCollectionLayoutGroup.vertical(
                 layoutSize: NSCollectionLayoutSize(
@@ -29,29 +77,6 @@ final class PaginatedScrollCollectionView: UICollectionView {
                 ]
             )
         )
-        
-        self.init(
-            frame: .zero,
-            collectionViewLayout: UICollectionViewCompositionalLayout(section: section)
-        )
-        
-        contentInsetAdjustmentBehavior = .never
-        isPagingEnabled = true
-        showsVerticalScrollIndicator = false
-        showsHorizontalScrollIndicator = false
-    }
-    
-    func updateVisibleCells() {
-        layoutIfNeeded()
-        let visibleIndexPaths = indexPathsForVisibleItems
-        let visibleCells = visibleCells
-        
-        let allItems = (0..<numberOfItems(inSection: 0)).map { IndexPath(item: $0, section: 0) }
-        let nonVisibleIndexPaths = allItems.filter { !visibleIndexPaths.contains($0) }
-        let nonVisibleCells = nonVisibleIndexPaths.compactMap { cellForItem(at: $0) }
-        
-        self.visible = visibleCells
-        self.nonVisible = nonVisibleCells
-        self.visibleIndexPaths = visibleIndexPaths
+        return UICollectionViewCompositionalLayout(section: section)
     }
 }
