@@ -120,11 +120,11 @@ final class ImprovedScrollViewController: UIViewController {
         > { [weak self] cell, indexPath, data in
             if let player = data.videoPlayer {
                 print("@@@ play from prefetched data")
-                cell.configure(with: player)
+                cell.configure(with: player, index: indexPath.row)
             } else {
                 print("@@@ play from current")
                 data.videoPlayer = .make(url: data.url)
-                cell.configure(with: data.videoPlayer!)
+                cell.configure(with: data.videoPlayer!, index: indexPath.row)
             }
             if indexPath.row == 0 && self?.firstDequeue == true {
                 cell.play()
@@ -154,15 +154,5 @@ extension ImprovedScrollViewController: UICollectionViewDelegate {
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         (scrollView as? PaginatedScrollCollectionView)?.updateVisibleCells()
         scrollView.isScrollEnabled = true
-    }
-
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let offsetY = scrollView.contentOffset.y
-        let contentHeight = scrollView.contentSize.height
-        let threshold: CGFloat = 100
-
-        if offsetY > contentHeight - scrollView.frame.size.height - threshold {
-            Task { await viewModel.loadMore() }
-        }
     }
 }

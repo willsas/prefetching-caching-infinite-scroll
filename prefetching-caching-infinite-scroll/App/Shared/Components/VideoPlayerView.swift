@@ -7,6 +7,15 @@ import UIKit
 import AVFoundation
 import Combine
 
+final class TrackingAVPlayer: AVPlayer {
+    var playbackStartTime: Date?
+
+    override func play() {
+        playbackStartTime = Date()
+        super.play()
+    }
+}
+
 final class VideoPlayerView: UIView {
     
     enum MaxResolutionSelection {
@@ -29,7 +38,7 @@ final class VideoPlayerView: UIView {
         }
     }
     
-    private var player: AVPlayer! {
+    private var player: TrackingAVPlayer! {
         didSet {
             playerObserver = PlayerObserver(player: player)
             observePlayer()
@@ -72,7 +81,7 @@ final class VideoPlayerView: UIView {
         preferredForwardBufferDuration: Double = 0,
         maxResolution: MaxResolutionSelection = .default
     ) {
-        let player = AVPlayer(url: url)
+        let player = TrackingAVPlayer(url: url)
         player.currentItem!.preferredForwardBufferDuration = preferredForwardBufferDuration
         player.currentItem!.preferredMaximumResolution = maxResolution.size
         self.player = player

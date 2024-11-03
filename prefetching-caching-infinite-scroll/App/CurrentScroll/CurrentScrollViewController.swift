@@ -125,7 +125,12 @@ final class CurrentScrollViewController: UIViewController {
 }
 
 extension CurrentScrollViewController: UICollectionViewDelegate {
+    func scrollViewWillBeginDecelerating(_ scrollView: UIScrollView) {
+        scrollView.isScrollEnabled = false
+    }
+    
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         (scrollView as? PaginatedScrollCollectionView)?.updateVisibleCells()
+        scrollView.isScrollEnabled = true
     }
 }

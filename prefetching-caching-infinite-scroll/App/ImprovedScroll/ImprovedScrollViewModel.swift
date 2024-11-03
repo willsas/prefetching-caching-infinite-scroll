@@ -71,17 +71,30 @@ final class ImprovedScrollViewModel: ObservableObject {
                 videos[index].videoPlayer = .make(url: videos[index].url)
             }
         }
-        discardPrefetchedData(currentIndex: currentIndex)
-        printCurrentVideos()
+        discardPrefetchedData(currentIndex: currentIndex, upperBound: adjustedUpperBound)
+        
+        printCachedVideos()
     }
     
-    private func discardPrefetchedData(currentIndex: Int) {
-        let adjustedLowerBound = max(0, currentIndex - 1)
+    private func discardPrefetchedData(currentIndex: Int, upperBound: Int) {
+        discardPreviousPrefetchedData(currentIndex: currentIndex)
+        discardNextPrefetchedData(upperBound: upperBound)
+    }
+    
+    private func discardPreviousPrefetchedData(currentIndex: Int) {
+        let adjustedLowerBound = max(0, currentIndex)
         (0..<adjustedLowerBound).forEach { index in
             videos[index].videoPlayer = nil
         }
     }
     
+    private func discardNextPrefetchedData(upperBound: Int) {
+        guard upperBound != videos.count else { return }
+        (upperBound..<videos.count).forEach { index in
+            videos[index].videoPlayer = nil
+        }
+    }
+        
     private func loadVideos() async throws -> [VideoList] {
         let videoLists = try await getVideos().map { VideoList(url: $0.url) }
         if let firstVideo = videoLists.first {
@@ -98,10 +111,11 @@ final class ImprovedScrollViewModel: ObservableObject {
         return videoLists
     }
     
-    private func printCurrentVideos() {
+    private func printCachedVideos() {
         videos.enumerated().forEach { (index, item) in
             print("@@@ videoplayer: \(item.videoPlayer == nil ? "NIL" : "Exist"),  index: \(index)")
         }
+        print("@@@ ------------------------------------------------\n")
     }
 }
 
