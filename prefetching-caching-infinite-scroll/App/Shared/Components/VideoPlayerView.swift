@@ -14,6 +14,10 @@ final class TrackingAVPlayer: AVPlayer {
         playbackStartTime = Date()
         super.play()
     }
+    
+    deinit {
+        print("@@@ TrackingAVPlayer deinit")
+    }
 }
 
 final class VideoPlayerView: UIView {
@@ -38,7 +42,7 @@ final class VideoPlayerView: UIView {
         }
     }
     
-    private var player: TrackingAVPlayer! {
+    private var player: TrackingAVPlayer = TrackingAVPlayer() {
         didSet {
             playerObserver = PlayerObserver(player: player)
             observePlayer()
@@ -78,14 +82,21 @@ final class VideoPlayerView: UIView {
 
     func configure(
         with url: URL,
-        preferredForwardBufferDuration: Double = 0,
-        maxResolution: MaxResolutionSelection = .default
+        preferredForwardBufferDuration: Double = 5,
+        maxResolution: MaxResolutionSelection = .screenSize
     ) {
         let player = TrackingAVPlayer(url: url)
         player.currentItem!.preferredForwardBufferDuration = preferredForwardBufferDuration
         player.currentItem!.preferredMaximumResolution = maxResolution.size
+        player.currentItem!.preferredPeakBitRate = 2_000
+        player.currentItem!.preferredPeakBitRateForExpensiveNetworks = 2_000
         self.player = player
         playerLayer.player = player
+    }
+    
+    func resetConfiguration() {
+        self.player = .init()
+        playerLayer.player = nil
     }
 
     func play() {

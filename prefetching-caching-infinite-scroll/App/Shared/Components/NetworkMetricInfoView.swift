@@ -1,6 +1,7 @@
 import AVFoundation
 import AVKit
 import Combine
+import MachO
 import UIKit
 
 final class Caption1Label: UILabel {
@@ -18,7 +19,8 @@ final class Caption1Label: UILabel {
 final class NetworkMetricInfoView: UIView {
 
     private let bufferSizeLabel = Caption1Label().text("Buffer Size: ... seconds")
-    private let playbackDelayLabel = Caption1Label().text("Playback Delay: ... seconds")
+    private let playbackDelayLabel = Caption1Label().text("Playback Delay: 0 seconds")
+    private let memoryUsageLabel = Caption1Label().text("Memory usage: 0 MB")
     private var cancellables = Set<AnyCancellable>()
     private weak var player: TrackingAVPlayer?
 
@@ -41,7 +43,8 @@ final class NetworkMetricInfoView: UIView {
 
         let stackView = UIStackView(arrangedSubviews: [
             bufferSizeLabel,
-            playbackDelayLabel
+            playbackDelayLabel,
+            memoryUsageLabel
         ])
 
         stackView.axis = .vertical
@@ -61,18 +64,20 @@ final class NetworkMetricInfoView: UIView {
     private func configureBindings(with player: TrackingAVPlayer) {
         guard let currentItem = player.currentItem else { return }
 
-        currentItem.publisher(for: \.isPlaybackLikelyToKeepUp).sink { [weak self] in
-            guard let self else { return }
-            if $0, let startTime = player.playbackStartTime {
+        currentItem.publisher(for: \.isPlaybackLikelyToKeepUp)
+            .filter { $0 }
+            .first()
+            .sink { [weak self] _ in
+                guard let self, let startTime = player.playbackStartTime else { return }
                 let delay = Date().timeIntervalSince(startTime)
-                playbackDelayLabel.text = "Playback Delay: \(String(format: "%.2f", delay)) seconds"
-            }
-        }.store(in: &cancellables)
+                playbackDelayLabel.text = "Playback Delay: \(String(format: "%.4f", delay)) seconds"
+            }.store(in: &cancellables)
 
         Timer.publish(every: 1.0, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 self?.updateBufferSize(for: currentItem)
+                self?.updateMemoryUsage()
             }
             .store(in: &cancellables)
     }
@@ -84,6 +89,31 @@ final class NetworkMetricInfoView: UIView {
             result + CMTimeGetSeconds(timeRange.timeRangeValue.duration)
         }
         bufferSizeLabel.text = "Buffer Size: \(Int(bufferSize)) seconds"
+    }
+
+    private func updateMemoryUsage() {
+        let memoryUsage = getMemoryUsage()
+        memoryUsageLabel
+            .text =
+            "Memory usage: \(String(format: "%.0f", memoryUsage.used)) MB"
+    }
+
+    private func getMemoryUsage() -> (used: Float, total: Float) {
+        var info = mach_task_basic_info()
+        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
+        let kerr: kern_return_t = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
+                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+            }
+        }
+
+        if kerr == KERN_SUCCESS {
+            let usedBytes = Float(info.resident_size)
+            let totalBytes = Float(ProcessInfo.processInfo.physicalMemory)
+            return (used: usedBytes / 1024 / 1024, total: totalBytes / 1024 / 1024) // Convert to MB
+        } else {
+            return (used: 0, total: 0) // Error handling
+        }
     }
 }
 

@@ -28,7 +28,7 @@ final class ImprovedVideoCollectionViewCell: UICollectionViewCell {
     private let indexLabel: UILabel = {
         let label = UILabel()
         label.textColor = .white
-        label.font = .systemFont(ofSize: 20, weight: .bold)
+        label.font = .boldSystemFont(ofSize: 24)
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -48,7 +48,7 @@ final class ImprovedVideoCollectionViewCell: UICollectionViewCell {
 
     func configure(with player: VideoPlayerView, index: Int) {
         playerView = player
-        indexLabel.text = "\(index)"
+        indexLabel.text = "index: \(index)"
     }
 
     func play() {

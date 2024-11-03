@@ -24,5 +24,5 @@ struct NetworkingConstant {
         "https://diceyk6a7voy4.cloudfront.net/e78752a1-2e83-43fa-85ae-3d508be29366/hls/fitfest-sample-1_Ott_Hls_Ts_Avc_Aac_16x9_1280x720p_30Hz_6.0Mbps_qvbr.m3u8",
         "https://assets.afcdn.com/video49/20210722/v_645516.m3u8"
     ]
-
+    static let videoListEndpoint = "https://willsas.github.io/m3u8-list/urls.json"
 }

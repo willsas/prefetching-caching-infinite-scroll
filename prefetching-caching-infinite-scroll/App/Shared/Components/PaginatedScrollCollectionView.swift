@@ -44,7 +44,6 @@ final class PaginatedScrollCollectionView: UICollectionView {
 
     private func setupLoadMore() {
         publisher(for: \.contentOffset)
-            .throttle(for: 10.0, scheduler: RunLoop.main, latest: true)
             .sink { [weak self] contentOffset in
                 guard let self else { return }
 

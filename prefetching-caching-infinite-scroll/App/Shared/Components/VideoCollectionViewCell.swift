@@ -7,10 +7,27 @@ import UIKit
 final class VideoCollectionViewCell: UICollectionViewCell {
 
     private let playerView = VideoPlayerView()
+    private var url: URL?
+    
+    private let indexContainer: UIView = {
+        let view = UIView()
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        return view
+    }()
+
+    private let indexLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .white
+        label.font = .boldSystemFont(ofSize: 24)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         configureView()
+        configureIndexLabel()
     }
 
     @available(*, unavailable)
@@ -20,13 +37,17 @@ final class VideoCollectionViewCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
+        playerView.resetConfiguration()
     }
 
-    func configure(with url: URL) {
-        playerView.configure(with: url)
+    func configure(with url: URL, index: Int) {
+        self.url = url
+        indexLabel.text = "index: \(index)"
     }
 
     func play() {
+        guard let url else { return }
+        playerView.configure(with: url)
         playerView.play()
     }
 
@@ -42,6 +63,29 @@ final class VideoCollectionViewCell: UICollectionViewCell {
             playerView.trailingAnchor.constraint(equalTo: trailingAnchor),
             playerView.topAnchor.constraint(equalTo: topAnchor),
             playerView.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
+    }
+    
+    private func configureIndexLabel() {
+        indexLabel.translatesAutoresizingMaskIntoConstraints = false
+        indexContainer.translatesAutoresizingMaskIntoConstraints = false
+
+        indexContainer.addSubview(indexLabel)
+        addSubview(indexContainer)
+
+        NSLayoutConstraint.activate([
+            indexContainer.leadingAnchor.constraint(
+                equalTo: safeAreaLayoutGuide.leadingAnchor,
+                constant: 10
+            ),
+            indexContainer.topAnchor.constraint(
+                equalTo: safeAreaLayoutGuide.topAnchor,
+                constant: 10
+            ),
+            indexLabel.leadingAnchor.constraint(equalTo: indexContainer.leadingAnchor),
+            indexLabel.trailingAnchor.constraint(equalTo: indexContainer.trailingAnchor),
+            indexLabel.topAnchor.constraint(equalTo: indexContainer.topAnchor),
+            indexLabel.bottomAnchor.constraint(equalTo: indexContainer.bottomAnchor)
         ])
     }
 }

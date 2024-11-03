@@ -102,7 +102,7 @@ final class CurrentScrollViewController: UIViewController {
             VideoCollectionViewCell,
             Video
         > { [weak self] cell, indexPath, data in
-            cell.configure(with: data.url)
+            cell.configure(with: data.url, index: indexPath.row)
 
             if indexPath.row == 0 && self?.firstDequeue == true {
                 cell.play()

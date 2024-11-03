@@ -122,11 +122,7 @@ final class ImprovedScrollViewModel: ObservableObject {
 extension VideoPlayerView {
     static func make(url: URL) -> VideoPlayerView {
         let videoPlayer = VideoPlayerView()
-        videoPlayer.configure(
-            with: url,
-            preferredForwardBufferDuration: 5,
-            maxResolution: .screenSize
-        )
+        videoPlayer.configure(with: url)
         return videoPlayer
     }
 }
