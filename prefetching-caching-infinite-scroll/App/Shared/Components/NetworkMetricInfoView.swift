@@ -19,8 +19,8 @@ final class Caption1Label: UILabel {
 final class NetworkMetricInfoView: UIView {
 
     private let bufferSizeLabel = Caption1Label().text("Buffer Size: ... seconds")
-    private let playbackDelayLabel = Caption1Label().text("Playback Delay: 0 seconds")
-    private let memoryUsageLabel = Caption1Label().text("Memory usage: 0 MB")
+    private let playbackDelayLabel = Caption1Label().text("Playback Startup Time: 0 seconds")
+    private let memoryUsageLabel = Caption1Label().text("Penggunaan Memori: 0 MB")
     private var cancellables = Set<AnyCancellable>()
     private weak var player: TrackingAVPlayer?
 
@@ -42,7 +42,6 @@ final class NetworkMetricInfoView: UIView {
         layer.masksToBounds = true
 
         let stackView = UIStackView(arrangedSubviews: [
-            bufferSizeLabel,
             playbackDelayLabel,
             memoryUsageLabel
         ])
@@ -70,7 +69,8 @@ final class NetworkMetricInfoView: UIView {
             .sink { [weak self] _ in
                 guard let self, let startTime = player.playbackStartTime else { return }
                 let delay = Date().timeIntervalSince(startTime)
-                playbackDelayLabel.text = "Playback Delay: \(String(format: "%.4f", delay)) seconds"
+                playbackDelayLabel
+                    .text = "Playback Startup Time: \(String(format: "%.4f", delay)) seconds"
             }.store(in: &cancellables)
 
         Timer.publish(every: 1.0, on: .main, in: .common)
@@ -95,7 +95,7 @@ final class NetworkMetricInfoView: UIView {
         let memoryUsage = getMemoryUsage()
         memoryUsageLabel
             .text =
-            "Memory usage: \(String(format: "%.0f", memoryUsage.used)) MB"
+            "Penggunaan Memori: \(String(format: "%.0f", memoryUsage.used)) MB"
     }
 
     private func getMemoryUsage() -> (used: Float, total: Float) {
@@ -110,9 +110,9 @@ final class NetworkMetricInfoView: UIView {
         if kerr == KERN_SUCCESS {
             let usedBytes = Float(info.resident_size)
             let totalBytes = Float(ProcessInfo.processInfo.physicalMemory)
-            return (used: usedBytes / 1024 / 1024, total: totalBytes / 1024 / 1024) // Convert to MB
+            return (used: usedBytes / 1024 / 1024, total: totalBytes / 1024 / 1024)
         } else {
-            return (used: 0, total: 0) // Error handling
+            return (used: 0, total: 0)
         }
     }
 }

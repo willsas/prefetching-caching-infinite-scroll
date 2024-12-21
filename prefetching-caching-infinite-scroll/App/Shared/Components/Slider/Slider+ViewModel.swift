@@ -1,12 +1,12 @@
 
 import UIKit
 
-public extension Slider {
+extension Slider {
     struct ViewModel {
-        public var maximumValue: Double = 1
-        public var minimumValue: Double = 0
-        public var value: Double = 0
-        public var bufferValue: Double = 0
-        public var interacting: Bool = false
+        var maximumValue: Double = 1
+        var minimumValue: Double = 0
+        var value: Double = 0
+        var bufferValue: Double = 0
+        var interacting: Bool = false
     }
 }

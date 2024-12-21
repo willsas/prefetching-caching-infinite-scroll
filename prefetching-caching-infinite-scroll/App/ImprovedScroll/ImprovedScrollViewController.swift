@@ -118,18 +118,8 @@ final class ImprovedScrollViewController: UIViewController {
             ImprovedVideoCollectionViewCell,
             VideoList
         > { [weak self] cell, indexPath, data in
-            if let player = data.videoPlayer {
-                print("@@@ play from prefetched data")
-                cell.configure(with: player, index: indexPath.row)
-            } else {
-                print("@@@ play from current")
-                data.videoPlayer = .make(url: data.url)
-                cell.configure(with: data.videoPlayer!, index: indexPath.row)
-            }
-            if indexPath.row == 0 && self?.firstDequeue == true {
-                cell.play()
-                self?.firstDequeue = false
-            }
+            self?.configureCell(cell, indexPath: indexPath, data: data)
+            self?.playFirstCellIfNeeded(cell, indexPath: indexPath)
         }
 
         let dataSource = DataSource(
@@ -143,6 +133,37 @@ final class ImprovedScrollViewController: UIViewController {
         }
 
         return dataSource
+    }
+    
+    private func configureCell(
+        _ cell: ImprovedVideoCollectionViewCell,
+        indexPath: IndexPath,
+        data: VideoList
+    ) {
+        if let player = data.videoPlayer {
+            print(">>> play from prefetched data")
+            cell.configure(with: player, index: indexPath.row)
+            cell.setScrollingEnabled = { [weak self] in
+                self?.collectionView.isScrollEnabled = $0
+            }
+        } else {
+            print(">>> play from network")
+            data.videoPlayer = .make(url: data.url)
+            cell.configure(with: data.videoPlayer!, index: indexPath.row)
+            cell.setScrollingEnabled = { [weak self] in
+                self?.collectionView.isScrollEnabled = $0
+            }
+        }
+    }
+    
+    private func playFirstCellIfNeeded(
+        _ cell: ImprovedVideoCollectionViewCell,
+        indexPath: IndexPath
+    ) {
+        if indexPath.row == 0 && firstDequeue == true {
+            cell.play()
+            firstDequeue = false
+        }
     }
 }
 

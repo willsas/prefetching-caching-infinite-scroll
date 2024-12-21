@@ -2,13 +2,16 @@
 //  VideoCollectionViewCell.swift
 //  prefetching-caching-infinite-scroll
 
+import Combine
 import UIKit
 
 final class VideoCollectionViewCell: UICollectionViewCell {
 
+    var setScrollingEnabled: ((Bool) -> Void)?
+
     private let playerView = VideoPlayerView()
     private var url: URL?
-    
+
     private let indexContainer: UIView = {
         let view = UIView()
         view.backgroundColor = UIColor.black.withAlphaComponent(0.5)
@@ -24,6 +27,8 @@ final class VideoCollectionViewCell: UICollectionViewCell {
         return label
     }()
 
+    private var scrubbingCancelable: AnyCancellable?
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         configureView()
@@ -34,7 +39,7 @@ final class VideoCollectionViewCell: UICollectionViewCell {
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
-    
+
     override func prepareForReuse() {
         super.prepareForReuse()
         playerView.resetConfiguration()
@@ -64,8 +69,16 @@ final class VideoCollectionViewCell: UICollectionViewCell {
             playerView.topAnchor.constraint(equalTo: topAnchor),
             playerView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
+
+        setupPlayerScrubbingObserver(playerView)
     }
-    
+
+    private func setupPlayerScrubbingObserver(_ playerView: VideoPlayerView) {
+        scrubbingCancelable = playerView.$isScrubbing.sink { [weak self] in
+            self?.setScrollingEnabled?(!$0)
+        }
+    }
+
     private func configureIndexLabel() {
         indexLabel.translatesAutoresizingMaskIntoConstraints = false
         indexContainer.translatesAutoresizingMaskIntoConstraints = false

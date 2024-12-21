@@ -6,7 +6,7 @@
 import UIKit
 
 final class VideoSlider: Slider {
-    
+
     convenience init() {
         self.init(
             slider: ThumblessSlider(

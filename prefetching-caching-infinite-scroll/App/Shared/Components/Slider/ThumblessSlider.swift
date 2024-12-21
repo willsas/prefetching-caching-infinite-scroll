@@ -1,14 +1,14 @@
 
 import UIKit
 
-open class ThumblessSlider: UIView, Slidable {
-    public enum CornerRadius {
+final class ThumblessSlider: UIView, Slidable {
+    enum CornerRadius {
         case full
         case fixed(CGFloat)
     }
 
-    public struct ScaleRatio {
-        @available(*, deprecated, renamed: "onAxis", message: "") public var ratioOnAxis: CGFloat {
+    struct ScaleRatio {
+        @available(*, deprecated, renamed: "onAxis", message: "") var ratioOnAxis: CGFloat {
             onAxis
         }
 
@@ -17,54 +17,54 @@ open class ThumblessSlider: UIView, Slidable {
             deprecated,
             renamed: "againstAxis",
             message: ""
-        ) public var ratioAgainstAxis: CGFloat {
+        ) var ratioAgainstAxis: CGFloat {
             againstAxis
         }
 
         @available(*, deprecated, renamed: "init(onAxis:againstAxis:)", message: "")
-        public init(ratioOnAxis: CGFloat, ratioAgainstAxis: CGFloat) {
+        init(ratioOnAxis: CGFloat, ratioAgainstAxis: CGFloat) {
             onAxis = ratioOnAxis
             againstAxis = ratioAgainstAxis
         }
 
-        public var onAxis: CGFloat
-        public var againstAxis: CGFloat
-        public init(onAxis: CGFloat, againstAxis: CGFloat) {
+        var onAxis: CGFloat
+        var againstAxis: CGFloat
+        init(onAxis: CGFloat, againstAxis: CGFloat) {
             self.onAxis = onAxis
             self.againstAxis = againstAxis
         }
     }
 
-    public let direction: Direction
+    let direction: Direction
 
-    public let scaleRatio: ScaleRatio
+    let scaleRatio: ScaleRatio
 
-    public let cornerRadius: CornerRadius
-    open var visualEffect: UIVisualEffect? {
+    let cornerRadius: CornerRadius
+    var visualEffect: UIVisualEffect? {
         didSet {
             visualEffectView.effect = visualEffect
         }
     }
 
-    public var customTintColor: UIColor?
+    var customTintColor: UIColor?
 
-    open class var defaultScaleRatio: ScaleRatio {
+    class var defaultScaleRatio: ScaleRatio {
         ScaleRatio(onAxis: 1, againstAxis: 1)
     }
 
-    open class var defaultDirection: Direction {
+    class var defaultDirection: Direction {
         .leadingToTrailing
     }
 
-    open class var defaultCornerRadius: CornerRadius {
+    class var defaultCornerRadius: CornerRadius {
         .full
     }
 
-    open class var defaultVisualEffect: UIVisualEffect {
+    class var defaultVisualEffect: UIVisualEffect {
         UIBlurEffect(style: .systemUltraThinMaterial)
     }
 
-    override open func tintColorDidChange() {
+    override func tintColorDidChange() {
         super.tintColorDidChange()
         fillingView?.backgroundColor = customTintColor ?? tintColor
     }
@@ -99,7 +99,7 @@ open class ThumblessSlider: UIView, Slidable {
 
     var visualEffectViewConstraints = VisualEffectViewConstraints()
 
-    public init(
+    init(
         direction: Direction = defaultDirection,
         scaleRatio: ScaleRatio = defaultScaleRatio,
         cornerRadius: CornerRadius = defaultCornerRadius,
@@ -115,7 +115,7 @@ open class ThumblessSlider: UIView, Slidable {
         buildView()
     }
 
-    public convenience init(
+    convenience init(
         direction: Direction = defaultDirection,
         scaling: Scaling,
         cornerRadius: CornerRadius = defaultCornerRadius,
@@ -131,7 +131,7 @@ open class ThumblessSlider: UIView, Slidable {
         )
     }
 
-    public required init?(coder: NSCoder) {
+    required init?(coder: NSCoder) {
         direction = Self.defaultDirection
         scaleRatio = Self.defaultScaleRatio
         cornerRadius = Self.defaultCornerRadius
@@ -140,17 +140,17 @@ open class ThumblessSlider: UIView, Slidable {
         buildView()
     }
 
-    override open func layoutSubviews() {
+    override func layoutSubviews() {
         super.layoutSubviews()
         fitValueRatio(valueRatio, when: isInteracting)
     }
 
-    override open func layoutSublayers(of layer: CALayer) {
+    override func layoutSublayers(of layer: CALayer) {
         super.layoutSublayers(of: layer)
         updateCornerRadius(getCornerRadius())
     }
 
-    override open func didMoveToSuperview() {
+    override func didMoveToSuperview() {
         super.didMoveToSuperview()
         guard superview != nil else {
             return
@@ -158,7 +158,7 @@ open class ThumblessSlider: UIView, Slidable {
         resetVariableAndFixedConstraint()
     }
 
-    override open var semanticContentAttribute: UISemanticContentAttribute {
+    override var semanticContentAttribute: UISemanticContentAttribute {
         get {
             super.semanticContentAttribute
         }
@@ -177,7 +177,7 @@ open class ThumblessSlider: UIView, Slidable {
 
     private var isInteracting: Bool = false
 
-    public var valueRatio: CGFloat = 0 {
+    var valueRatio: CGFloat = 0 {
         didSet {
             fitValueRatio(valueRatio, when: isInteracting)
         }
@@ -202,7 +202,7 @@ open class ThumblessSlider: UIView, Slidable {
         }
     }
 
-    public func fit(_ viewModel: Slider.ViewModel) {
+    func fit(_ viewModel: Slider.ViewModel) {
         let valueRatio = viewModel.value / (viewModel.maximumValue + viewModel.minimumValue)
         if self.valueRatio != valueRatio {
             self.valueRatio = valueRatio

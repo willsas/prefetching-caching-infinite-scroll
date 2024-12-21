@@ -3,9 +3,9 @@
 //  prefetching-caching-infinite-scroll
 //
 
-import UIKit
 import AVFoundation
 import Combine
+import UIKit
 
 final class TrackingAVPlayer: AVPlayer {
     var playbackStartTime: Date?
@@ -14,35 +14,33 @@ final class TrackingAVPlayer: AVPlayer {
         playbackStartTime = Date()
         super.play()
     }
-    
-    deinit {
-        print("@@@ TrackingAVPlayer deinit")
+}
+
+enum MaxResolutionSelection {
+    case screenSize
+    case fullHD
+    case hd
+    case sd
+    case `default`
+
+    var size: CGSize {
+        switch self {
+        case .fullHD: return .init(width: 1920, height: 1080)
+        case .screenSize:
+            let screenSize = UIScreen.main.bounds.size
+            return CGSize(width: screenSize.width, height: screenSize.height)
+        case .hd: return .init(width: 1280, height: 720)
+        case .sd: return .init(width: 640, height: 360)
+        case .default: return .zero
+        }
     }
 }
 
 final class VideoPlayerView: UIView {
-    
-    enum MaxResolutionSelection {
-        case screenSize
-        case fullHD
-        case hd
-        case sd
-        case `default`
-        
-        var size: CGSize {
-            switch self {
-            case .fullHD: return .init(width: 1920, height: 1080)
-            case .screenSize:
-                let screenSize = UIScreen.main.bounds.size
-                return CGSize(width: screenSize.width, height: screenSize.height)
-            case .hd: return .init(width: 1280, height: 720)
-            case .sd: return .init(width: 640, height: 360)
-            case .default: return .zero
-            }
-        }
-    }
-    
-    private var player: TrackingAVPlayer = TrackingAVPlayer() {
+
+    @Published var isScrubbing = false
+
+    private var player: TrackingAVPlayer = .init() {
         didSet {
             playerObserver = PlayerObserver(player: player)
             observePlayer()
@@ -88,14 +86,12 @@ final class VideoPlayerView: UIView {
         let player = TrackingAVPlayer(url: url)
         player.currentItem!.preferredForwardBufferDuration = preferredForwardBufferDuration
         player.currentItem!.preferredMaximumResolution = maxResolution.size
-        player.currentItem!.preferredPeakBitRate = 2_000
-        player.currentItem!.preferredPeakBitRateForExpensiveNetworks = 2_000
         self.player = player
         playerLayer.player = player
     }
-    
+
     func resetConfiguration() {
-        self.player = .init()
+        player = .init()
         playerLayer.player = nil
     }
 
@@ -104,7 +100,7 @@ final class VideoPlayerView: UIView {
         player.play()
         slider.viewModel.bufferValue = playerObserver.loadedBuffer.value
     }
-    
+
     func replay() {
         player.seekToNormalizedTime(0) { [weak self] _ in
             self?.play()
@@ -114,7 +110,7 @@ final class VideoPlayerView: UIView {
     func pause() {
         player.pause()
     }
-    
+
     private func reset() {
         pauseButonImage.isHidden = true
         loadingView.stopLoading()
@@ -140,11 +136,11 @@ final class VideoPlayerView: UIView {
                 self?.loadingView.stopLoading()
             }
         }.store(in: &cancellables)
-        
+
         playerObserver.isPlaying.sink { [weak self] isPlaying in
             if isPlaying { self?.pauseButonImage.isHidden = true }
         }.store(in: &cancellables)
-        
+
         playerObserver.didEnd.sink { [weak self] in
             self?.replay()
         }.store(in: &cancellables)
@@ -163,7 +159,7 @@ final class VideoPlayerView: UIView {
         playerLayer.videoGravity = .resizeAspectFill
         layer.addSublayer(playerLayer)
     }
-    
+
     private func setupLoadingView() {
         loadingView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(loadingView)
@@ -173,7 +169,7 @@ final class VideoPlayerView: UIView {
         ])
         loadingView.isHidden = true
     }
-    
+
     private func setupPauseButton() {
         pauseButonImage.translatesAutoresizingMaskIntoConstraints = false
         addSubview(pauseButonImage)
@@ -196,20 +192,25 @@ final class VideoPlayerView: UIView {
             slider.heightAnchor.constraint(equalToConstant: 10)
         ])
 
+        slider.valueChangedOnBegin = { [weak self] _ in
+            self?.isScrubbing = true
+        }
+
         slider.valueChangedOnEnd = { [weak self] in
             self?.player.seekToNormalizedTime(Float($0))
+            self?.isScrubbing = false
         }
     }
-    
+
     private func setupNetworkMetric() {
         networkMetric = NetworkMetricInfoView(player: player)
         guard let networkMetric else { return }
-        
+
         networkMetric.translatesAutoresizingMaskIntoConstraints = false
         addSubview(networkMetric)
         NSLayoutConstraint.activate([
             networkMetric.trailingAnchor.constraint(equalTo: trailingAnchor),
-            networkMetric.centerYAnchor.constraint(equalTo: centerYAnchor)
+            networkMetric.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor)
         ])
     }
 

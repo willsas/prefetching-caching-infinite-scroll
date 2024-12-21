@@ -2,7 +2,7 @@
 
 import Foundation
 
-public extension Slider {
+extension Slider {
     enum Option {
         @available(*, deprecated, renamed: "tracks", message: "")
         case trackingBehavior(TrackingBehavior = .trackMovement)
@@ -10,16 +10,9 @@ public extension Slider {
     }
 
     struct Options {
-        /// Behavior when the user moves finger on the track.
-        ///
-        /// The thumb won't move if the user just tapped but did not moved one's finger. To get
-        /// thumb moved
-        /// immediately after the touch began, change `moveToPointWhenTouchDown` to `true`.
-        public var trackingBehavior: TrackingBehavior
+        var trackingBehavior: TrackingBehavior
 
-        public init(
-            trackingBehavior: TrackingBehavior = .onTranslation
-        ) {
+        init(trackingBehavior: TrackingBehavior = .onTranslation) {
             self.trackingBehavior = trackingBehavior
         }
     }
@@ -34,13 +27,8 @@ public extension Slider {
         case trackTouch(respondsImmediately: Bool)
         @available(*, deprecated, renamed: "onMovement", message: "")
         case trackMovement
-
-        /// The thumb of the slider is always attached to the user's finger.
         case onLocation
-        /// The thumb of the slider follows the finger once it starts moving.
         case onLocationOnceMoved
-        /// The thumb of the slider moves the same distance on the same direction with the user's
-        /// finger.
         case onTranslation
     }
 }

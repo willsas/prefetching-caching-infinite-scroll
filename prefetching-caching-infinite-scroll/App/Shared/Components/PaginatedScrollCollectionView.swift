@@ -39,7 +39,7 @@ final class PaginatedScrollCollectionView: UICollectionView {
 
         onVisibleCells = visibleCells
         onNonVisibleCells = nonVisibleCells
-        self.onVisibleIndexPaths = visibleIndexPaths
+        onVisibleIndexPaths = visibleIndexPaths
     }
 
     private func setupLoadMore() {

@@ -1,13 +1,12 @@
 
 import UIKit
 
-open class UIKitSlider: UISlider, Slidable {
-    open var direction: Direction {
+final class UIKitSlider: UISlider, Slidable {
+    var direction: Direction {
         .leadingToTrailing
     }
 
-    open func fit(_ viewModel: Slider.ViewModel) {
-        // no scale transform
+    func fit(_ viewModel: Slider.ViewModel) {
         maximumValue = Float(viewModel.maximumValue)
         minimumValue = Float(viewModel.minimumValue)
         value = Float(viewModel.value)

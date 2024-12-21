@@ -28,7 +28,7 @@ final class MainTabBarController: UITabBarController {
             )
         ])
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         UITabBar.appearance().tintColor = UIColor.red

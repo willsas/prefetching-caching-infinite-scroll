@@ -4,8 +4,11 @@
 //
 
 import UIKit
+import Combine
 
 final class ImprovedVideoCollectionViewCell: UICollectionViewCell {
+    
+    var setScrollingEnabled: ((Bool) -> Void)?
 
     private var playerView: VideoPlayerView? {
         didSet {
@@ -32,6 +35,8 @@ final class ImprovedVideoCollectionViewCell: UICollectionViewCell {
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
+    
+    private var scrubbingCancelable: AnyCancellable?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -44,6 +49,7 @@ final class ImprovedVideoCollectionViewCell: UICollectionViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
+        scrubbingCancelable = nil
     }
 
     func configure(with player: VideoPlayerView, index: Int) {
@@ -69,6 +75,14 @@ final class ImprovedVideoCollectionViewCell: UICollectionViewCell {
             playerView.topAnchor.constraint(equalTo: topAnchor),
             playerView.bottomAnchor.constraint(equalTo: bottomAnchor)
         ])
+        
+        setupPlayerScrubbingObserver(playerView)
+    }
+    
+    private func setupPlayerScrubbingObserver(_ playerView: VideoPlayerView) {
+        scrubbingCancelable = playerView.$isScrubbing.sink { [weak self] in
+            self?.setScrollingEnabled?(!$0)
+        }
     }
 
     private func configureIndexLabel() {

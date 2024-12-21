@@ -103,11 +103,10 @@ final class CurrentScrollViewController: UIViewController {
             Video
         > { [weak self] cell, indexPath, data in
             cell.configure(with: data.url, index: indexPath.row)
-
-            if indexPath.row == 0 && self?.firstDequeue == true {
-                cell.play()
-                self?.firstDequeue = false
+            cell.setScrollingEnabled = { [weak self] in
+                self?.collectionView.isScrollEnabled = $0
             }
+            self?.playFirstCellIfNeeded(cell, indexPath: indexPath)
         }
 
         let dataSource = DataSource(
@@ -121,6 +120,16 @@ final class CurrentScrollViewController: UIViewController {
         }
 
         return dataSource
+    }
+    
+    private func playFirstCellIfNeeded(
+        _ cell: VideoCollectionViewCell,
+        indexPath: IndexPath
+    ) {
+        if indexPath.row == 0 && firstDequeue == true {
+            cell.play()
+            firstDequeue = false
+        }
     }
 }
 

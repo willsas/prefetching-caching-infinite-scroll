@@ -1,12 +1,12 @@
 import UIKit
 
-public protocol Slidable: AnyObject where Self: UIView {
+protocol Slidable: AnyObject where Self: UIView {
     var direction: Direction { get }
 
     func fit(_ viewModel: Slider.ViewModel)
 }
 
-public extension Slidable {
+extension Slidable {
     var layoutDirection: UIUserInterfaceLayoutDirection {
         UIView.userInterfaceLayoutDirection(for: semanticContentAttribute)
     }
@@ -95,17 +95,11 @@ extension CGPoint {
 }
 
 public enum Direction {
-    /// The thumb moves horizontally on the track. The leading end is the minimum value.
     case leadingToTrailing
-    /// The thumb moves horizontally on the track. The left end is the minimum value.
     case leftToRight
-    /// The thumb moves horizontally on the track. The trailing end is the minimum value.
     case trailingToLeading
-    /// The thumb moves horizontally on the track. The right end is the minimum value.
     case rightToLeft
-    /// The thumb moves vertically on the track. The bottom end is the minimum value.
     case bottomToTop
-    /// The thumb moves vertically on the track. The top end is the minimum value.
     case topToBottom
 
     var axis: Axis {

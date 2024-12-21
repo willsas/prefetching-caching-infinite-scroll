@@ -1,7 +1,7 @@
 
 import Foundation
 
-public extension ThumblessSlider {
+extension ThumblessSlider {
     enum Scaling {
         case onAxis(_ ratio: CGFloat)
         case againstAxis(_ ratio: CGFloat)

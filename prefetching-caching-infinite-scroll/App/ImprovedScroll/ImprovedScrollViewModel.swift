@@ -115,7 +115,7 @@ final class ImprovedScrollViewModel: ObservableObject {
         videos.enumerated().forEach { (index, item) in
             print("@@@ videoplayer: \(item.videoPlayer == nil ? "NIL" : "Exist"),  index: \(index)")
         }
-        print("@@@ ------------------------------------------------\n")
+        print("@@@ ------------------------------------------------\n\n\n\n")
     }
 }
 

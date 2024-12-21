@@ -1,32 +1,30 @@
 import UIKit
 
-open class Slider: UIView {
-    open internal(set) var slider: Slidable
-    open internal(set) var bufferSlider: Slidable
-    open internal(set) var options: Options
+class Slider: UIView {
+    private(set) var slider: Slidable
+    private(set) var bufferSlider: Slidable
+    private(set) var options: Options
 
-    /// Invoked when the value of `Slyder` object changes.
-    ///
-    /// Might get invoked with repeating values for multiple times.
-    open var valueChangeHandler: ((Double) -> Void)?
-    open var valueChangedOnEnd: ((Double) -> Void)?
+    var valueChangeHandler: ((Double) -> Void)?
+    var valueChangedOnEnd: ((Double) -> Void)?
+    var valueChangedOnBegin: ((Double) -> Void)?
 
-    open func onValueChange(_ closure: ((Double) -> Void)?) -> Self {
+    func onValueChange(_ closure: ((Double) -> Void)?) -> Self {
         valueChangeHandler = closure
         return self
     }
 
-    override open func tintColorDidChange() {
+    override func tintColorDidChange() {
         super.tintColorDidChange()
         slider.tintColor = tintColor
         bufferSlider.tintColor = tintColor
     }
 
-    open class func DefaultSlider() -> Slidable {
+    class func DefaultSlider() -> Slidable {
         ThumblessSlider()
     }
 
-    override open var semanticContentAttribute: UISemanticContentAttribute {
+    override var semanticContentAttribute: UISemanticContentAttribute {
         get {
             super.semanticContentAttribute
         }
@@ -71,7 +69,7 @@ open class Slider: UIView {
         fit(viewModel)
     }
 
-    open var viewModel = ViewModel() {
+    var viewModel = ViewModel() {
         didSet {
             fit(viewModel)
             let value = viewModel.value
@@ -81,7 +79,7 @@ open class Slider: UIView {
         }
     }
 
-    override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
         guard let touch = touches.first else {
             return
@@ -91,9 +89,11 @@ open class Slider: UIView {
         valueWhenTouchBegan = viewModel.value
         touchPointWhenBagan = location
         handleTouchDown(on: location)
+
+        valueChangedOnBegin?(viewModel.value)
     }
 
-    override open func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesMoved(touches, with: event)
         guard let touch = touches.first else {
             return
@@ -119,7 +119,7 @@ open class Slider: UIView {
         }
     }
 
-    override open func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesEnded(touches, with: event)
         viewModel.interacting = false
         valueWhenTouchBegan = nil
@@ -128,15 +128,13 @@ open class Slider: UIView {
         valueChangedOnEnd?(viewModel.value)
     }
 
-    override open func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
+    override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesCancelled(touches, with: event)
         viewModel.interacting = false
         valueWhenTouchBegan = nil
         touchPointWhenBagan = nil
     }
 }
-
-// MARK: tracking
 
 private extension Slider {
     func handleTouchDown(on point: CGPoint) {
@@ -194,8 +192,6 @@ private extension Slider {
     }
 }
 
-// MARK: build view
-
 private extension Slider {
     func fit(_ viewModel: ViewModel) {
         slider.fit(viewModel)
@@ -210,7 +206,7 @@ private extension Slider {
             top: 20, leading: 20, bottom: 20, trailing: 20
         )
 
-        isMultipleTouchEnabled = false // don't support multiple touch
+        isMultipleTouchEnabled = false
         addSubview(bufferSlider)
         addSubview(slider)
 
